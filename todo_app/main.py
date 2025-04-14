@@ -12,7 +12,6 @@ from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 import os
-
 load_dotenv()
 
 # =======================

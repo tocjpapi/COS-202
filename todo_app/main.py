@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 import os
+
 load_dotenv()
 
 # =======================
@@ -87,13 +88,12 @@ async def show_create_todo_form(request: Request):
 @app.post('/todos/create', response_class=HTMLResponse)
 async def create_todo(request: Request, session: SessionDep):
     content_type = request.headers.get("content-type", "")
-
     todo_data = None
 
     if "application/json" in content_type:
         data = await request.json()
         todo_data = TodoCreate(**data)
-    else:  # Assume it's form-encoded
+    else:  
         form = await request.form()
         todo_data = TodoCreate(
             name=form["name"],
@@ -106,7 +106,7 @@ async def create_todo(request: Request, session: SessionDep):
     session.add(todo)
     session.commit()
     session.refresh(todo)
-    request.session["flash"] = "Todo created successfully!" # Flash message
+    request.session["flash"] = "Todo created successfully!" 
     return RedirectResponse(url='/', status_code=303)
 
 
@@ -117,3 +117,52 @@ def get_todo(todo_id: int, request: Request, session: SessionDep):
         raise HTTPException(status_code=404, detail="Todo not found")
     return templates.TemplateResponse("todo_detail.html", {"request": request, "todo": todo})
 
+@app.get("/todos/{todo_id}/edit", response_class=HTMLResponse)
+async def show_update_todo(todo_id: int, request: Request, session: SessionDep):
+    todo = session.get(Todo, todo_id)
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    
+    context = {
+        "request": request,
+        "todo": todo
+    }
+    return templates.TemplateResponse("edit_todo.html", context)
+
+
+@app.post("/todos/{todo_id}/edit", response_class=HTMLResponse)
+async def update_todo(
+    request: Request,
+    todo_id: int,
+    session: SessionDep,
+    name: Annotated[str, Form(...)],
+    description: Annotated[str, Form(...)],
+    start_time: Annotated[str, Form(...)],
+    end_time: Annotated[str, Form(...)]
+):
+    todo = session.get(Todo, todo_id)
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    todo.name = name
+    todo.description = description
+    todo.start_time = datetime.fromisoformat(start_time)
+    todo.end_time = datetime.fromisoformat(end_time)
+
+    session.add(todo)
+    session.commit()
+
+    request.session["flash"] = "Todo updated successfully!"
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.delete("/todos/{todo_id}/delete", response_class=HTMLResponse)
+async def delete_todo(todo_id: int, request: Request, session: SessionDep):
+    todo = session.get(Todo, todo_id)
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    session.delete(todo)
+    session.commit()
+
+    return HTMLResponse(content="Todo deleted", status_code=200)

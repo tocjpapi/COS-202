@@ -1,50 +1,89 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
-%}
-<div class="max-w-6xl mx-auto px-4 py-10">
-  <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">
-    Welcome to the Todo App
-  </h1>
-  <p class="text-center text-gray-600 mb-10">
-    This is a simple fullstack Todo application built with FastAPI and Jinja2
-    templates.
-  </p>
+  %}
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    {% for todo in todos %}
-    <div
-      class="bg-white shadow-md rounded-lg p-5 hover:shadow-lg transition duration-200"
-    >
-      <a
-        href="/todos/{{ todo.id }}"
-        class="text-xl font-semibold text-d94a3c mb-2 hover:underline block"
+  <div class="max-w-6xl mx-auto px-4 py-10">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">
+      Welcome to the Todo App
+    </h1>
+    <p class="text-center text-gray-600 mb-10">
+      This is a simple fullstack Todo application built with FastAPI and Jinja2
+      templates.
+    </p>
+  
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {% for todo in todos %}
+      <div
+        class="bg-white shadow-md rounded-lg p-5 hover:shadow-lg transition duration-200" style="position: relative;"
       >
-        {{ todo.name }}
-      </a>
-
-      <p class="text-gray-700 mb-2">{{ todo.description }}</p>
-      <p class="text-sm text-gray-500">
-        <strong>Start:</strong> {{ todo.start_time }}
-      </p>
-      <p class="text-sm text-gray-500">
-        <strong>End:</strong> {{ todo.end_time }}
-      </p>
-      <p class="text-sm text-gray-500">
-        <strong>Status:</strong> {{ todo.status }}
-      </p>
+        <a
+          href="/todos/{{ todo.id }}"
+          class="text-xl font-semibold text-d94a3c mb-2 hover:underline block"
+        >
+          {{ todo.name }}
+        </a>
+  
+        <p class="text-gray-700 mb-2">{{ todo.description }}</p>
+        <p class="text-sm text-gray-500">
+          <strong>Start:</strong> {{ todo.start_time }}
+        </p>
+        <p class="text-sm text-gray-500">
+          <strong>End:</strong> {{ todo.end_time }}
+        </p>
+        <p class="text-sm text-gray-500">
+          <strong>Status:</strong> {{ todo.status }}
+        </p>
+        <button id="deleteButton" class="delete-button" 
+        style="  
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #fff;
+        padding-left: 10px;
+        padding-right: 5px;
+        padding-top: 3px;
+        padding-bottom: 3px;        
+        border-radius: 4px; " onclick="deleteTodo('{{todo.id}}')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="10" fill="#ccc" />
+  <line x1="15" y1="9" x2="9" y2="15" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+  <line x1="9" y1="9" x2="15" y2="15" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+</svg>
+</button>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
+  
+    <div class="mt-10 flex justify-center space-x-4">
+      <!-- <a href="/todos" class="bg-[#d94a3c] hover:bg-[#b63c30] text-white px-6 py-2 rounded-md shadow">
+        View All Todos
+      </a> -->
+      <a
+        href="/todos/create"
+        class="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-md shadow"
+      >
+        Add New Todo
+      </a>
+    </div>
   </div>
-
-  <div class="mt-10 flex justify-center space-x-4">
-    <!-- <a href="/todos" class="bg-[#d94a3c] hover:bg-[#b63c30] text-white px-6 py-2 rounded-md shadow">
-      View All Todos
-    </a> -->
-    <a
-      href="/todos/create"
-      class="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-md shadow"
-    >
-      Add New Todo
-    </a>
-  </div>
-</div>
-{% endblock %}
+  <script>
+    function deleteTodo(id) {
+      console.log("got here");
+  
+      fetch(`/todos/${id}/delete`, {
+        method: "DELETE"
+      })
+      .then(res => {
+        console.log(res.ok);
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          alert("Failed to delete the todo.");
+        }
+      })
+      .catch(() => {
+        alert("Something went wrong, please try again later.");
+      });
+    }
+  </script>
+  
+  {% endblock %}
